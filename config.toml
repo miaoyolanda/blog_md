@@ -1,0 +1,83 @@
+# This is a simple configuration.
+# If you want to see the full configuration, please check `full-config.toml` .
+# And see https://gohugo.io/getting-started/configuration/ .
+
+baseURL = "//blog.betacat.io"
+title = "喵叔的杂货铺"
+enableRobotsTXT = true
+enableEmoji = true
+theme = "jane"
+
+hasCJKLanguage = true     # has chinese/japanese/korean ?
+paginate = 5              # Number of articles displayed on the homepage
+rssLimit = 20             # Limit Entry Count to Rss file
+disqusShortname = ""      # disqus_shortname
+googleAnalytics = ""      # UA-XXXXXXXX-X
+copyright = ""            # default: author.name ↓        # 默认为下面配置的author.name ↓
+
+# language support # en / zh-cn / other... translations present in i18n/
+defaultContentLanguage = "zh-cn"           # Default language to use
+[languages.zh-cn]
+  languageCode = "zh-cn"
+
+[author]                  # essential                     # 必需
+  name = "喵叔"
+
+[sitemap]                 # essential                     # 必需
+  changefreq = "weekly"
+  priority = 0.5
+  filename = "sitemap.xml"
+
+[[menu.main]]             # config your menu              # 配置目录
+  name = "Home"
+  weight = 10
+  identifier = "home"
+  url = "/"
+[[menu.main]]
+  name = "Archives"
+  weight = 20
+  identifier = "archives"
+  url = "/post/"
+
+
+[params]
+  since = "2018"            # Site creation time
+  homeFullContent = false   # if false, show post summaries on home page. Othewise show full content.
+  rssFullContent = true     # if false, Rss feed instead of the summary
+
+  # site info (optional)
+  # logoTitle = "喵叔"        # default: the title value
+  # keywords = ["喵叔", "theme","jane"]
+  # description = "Hugo theme jane example site."
+
+  # The date format to use; for a list of valid formats, see https://gohugo.io/functions/format/
+  dateFormatToUse = "2006-01-02"
+
+  # Some global options, you can also close or open something in front matter for a single post, see more information from `archetypes/default.md`.
+  toc = true                                                                            # 是否开启目录
+  photoswipe = true         # see https://github.com/dimsemenov/PhotoSwipe            # 是否启用PhotoSwipe（图片可点击）
+  contentCopyright = '<a rel="license noopener" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank">CC BY-NC-ND 4.0</a>'
+
+  # Link custom CSS and JS assets
+  #   (relative to /static/css and /static/js respectively)
+  customCSS = []            # if ['custom.css'], load '/static/css/custom.css' file
+  customJS = []             # if ['custom.js'], load '/static/js/custom.js' file
+
+  [params.social]                                         # 社交链接
+    a-email = "/email.gif"
+    # b-stack-overflow = "http://localhost:1313"
+    c-twitter = "javascript:alert('My tweets are protected now')"
+    # d-facebook = "http://localhost:1313"
+    e-linkedin = "https://www.linkedin.com/in/%E6%98%8C%E6%96%B0-%E7%BC%AA-b46b8591/"
+    # f-google = "http://localhost:1313"
+    g-github = "https://github.com/polyrabbit"
+    # h-weibo = "http://localhost:1313"
+    # i-zhihu = "http://localhost:1313"
+    # j-douban = "http://localhost:1313"
+    # k-pocket = "http://localhost:1313"
+    # l-tumblr = "http://localhost:1313"
+    # m-instagram = "http://localhost:1313"
+    # n-gitlab = "http://localhost:1313"
+    # o-goodreads = "http://localhost:1313"
+    # p-coding = "http://localhost:1313"
+    # q-bilibili = "http://localhost:1313"
