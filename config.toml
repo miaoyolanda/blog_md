@@ -52,6 +52,8 @@ defaultContentLanguage = "zh-cn"           # Default language to use
 
   # The date format to use; for a list of valid formats, see https://gohugo.io/functions/format/
   dateFormatToUse = "2006-01-02"
+
+  moreMeta = true          # show word count and read time
   
   baidu_analytics = "1d8c3618a611e95c78e0fcaf38baf230"
 
