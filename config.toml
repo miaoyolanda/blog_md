@@ -3,7 +3,7 @@
 # And see https://gohugo.io/getting-started/configuration/ .
 
 baseURL = "//blog.betacat.io"
-title = "喵叔的杂货铺"
+title = "喵叔的博客"
 enableRobotsTXT = true
 enableEmoji = true
 theme = "jane"
@@ -14,6 +14,13 @@ rssLimit = 20             # Limit Entry Count to Rss file
 disqusShortname = ""      # disqus_shortname
 googleAnalytics = "UA-36049801-4"      # UA-XXXXXXXX-X
 copyright = ""            # default: author.name ↓        # 默认为下面配置的author.name ↓
+
+# Highlight options.
+# See https://gohugo.io/content-management/syntax-highlighting/
+PygmentsCodeFences = true # Enable syntax highlighting with GitHub flavoured code fences
+PygmentsUseClasses = true # Use CSS classes to format highlighted code
+PygmentsCodefencesGuessSyntax = true
+PygmentsOptions = "linenos=table"
 
 # language support # en / zh-cn / other... translations present in i18n/
 defaultContentLanguage = "zh-cn"           # Default language to use
@@ -56,6 +63,8 @@ defaultContentLanguage = "zh-cn"           # Default language to use
   moreMeta = true          # show word count and read time
   
   baidu_analytics = "1d8c3618a611e95c78e0fcaf38baf230"
+
+  customFooter = "沪ICP备17033881号-1"
 
   # Some global options, you can also close or open something in front matter for a single post, see more information from `archetypes/default.md`.
   toc = true                                                                            # 是否开启目录

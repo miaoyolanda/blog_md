@@ -1,6 +1,7 @@
 ---
 title: "我所了解的IBM主机"
 date: 2018-10-16T17:16:09+08:00
+keywords: ["ibm", "主机", "zos", "mainframe", "dataset", "jcl", "jes"]
 ---
 
 我目前的工作主要是跟IBM主机打交道，但每次向别人介绍主机时，总觉得对方很难get到它的价值。一方面是因为主机这个系统太古老，又相对封闭，它从芯片，到存储，再到操作系统都是IBM一手包办的，外界很难接触到这个系统，另一方面一直以来主机的努力方向都是希望一台机器就能满足用户高性能，高可用的需求，这跟现在用廉价机器搭建分布式集群的哲学是相对的，所以在这样的时代背景下，主机就更显得格格不入了。
@@ -12,7 +13,7 @@ IBM主机又称大型机(mainframe)，最早可以追溯到上世纪60年代IBM�
 
 <!-- ![z14(zMidas)](/ibm-mainframe/ibm_z14-large.jpg) -->
 
-{{< figure src="/ibm-mainframe/z14.png" caption="充满科技感的 z14" >}}
+{{< figure src="/image/ibm-mainframe/z14.png" caption="充满科技感的 z14" >}}
 
 
 IBM主机相比于其他计算机系统，其主要特点在于它的[RAS](https://zh.wikipedia.org/wiki/%E5%8F%AF%E9%9D%A0%E6%80%A7%E3%80%81%E5%8F%AF%E7%94%A8%E6%80%A7%E5%92%8C%E5%8F%AF%E7%B6%AD%E8%AD%B7%E6%80%A7)(Reliability, Availability, Serviceability 高可靠性、高可用性、高可维护性)。曾经有用户反馈，在使用主机的数十年时间内，从未发生过异常停机事件。正是因为这些方面的优点和强大的处理能力，到现在为止还没有其他的系统可以替代它。但由于成本巨大（根据客户需求的不同，一台主机售价约几千万到几亿人民币），使用主机系统的一般以政府、银行、保险公司和大型制造企业为主，因为这些机构对信息的稳定性和安全性要求很高。全球财富500强企业中的71%是IBM主机用户，全球企业级数据有80%驻留在IBM主机上[^market-share]。在我国，从央行到工农中建四大商业银行，其核心业务平台都是跑在IBM主机上的（希望银行能给点力，早日摆脱对国外技术的依赖）。
@@ -28,7 +29,7 @@ IBM主机相比于其他计算机系统，其主要特点在于它的[RAS](https
 * 支持8000个虚拟机
 * 可以横向扩展（Scale-out）到2百万个Docker容器
 
-{{< figure src="/ibm-mainframe/z14-hardware.jpeg" caption="硬件配置的发展" >}}
+{{< figure src="/image/ibm-mainframe/z14-hardware.jpeg" caption="硬件配置的发展" >}}
 
 除此之外，IBM还将一些常用的软件模块用硬件实现了，比如硬件压缩卡(zEDC)，排序指令，加密指令，向量运算指令等。这些原本需要通过软件模拟来实现的功能，直接有了对应的硬件支持，这种霸气的设计方法，对年轻的我造成了巨大的冲击。
 
@@ -38,7 +39,7 @@ IBM主机相比于其他计算机系统，其主要特点在于它的[RAS](https
 
 主机上的操作系统叫做[z/OS](https://en.wikipedia.org/wiki/Z/OS)，`z`代表终极的意思。我们需要通过一个叫[3270](https://en.wikipedia.org/wiki/3270_emulator)的终端来连接它，由于这个终端的配色以绿色为主，所以我们又叫它`小绿屏`。这个小绿屏实在太显眼了，有同事曾在宜家的收银台一眼认出来过，不过我很好奇，宜家的收银员难道还要懂怎么操作底层的z/OS？
 
-{{< figure src="/ibm-mainframe/ispf.png" caption="小绿屏" >}}
+{{< figure src="/image/ibm-mainframe/ispf.png" caption="小绿屏" >}}
 
 与z/OS的交互跟现代系统很不一样，它是一个用文本画出来的界面（如上图），可以在界面的不同位置输入不同的命令来完成不同的功能。比如这里我可以在`Option ===>`那一栏通过输入menu之前的数字或者字母来进入相应menu。另外的一些功能则需要通过`fn`键来完成，比如`F3`是返回，`F8`是向下滚屏，`F7`是向上滚屏。
 
@@ -52,7 +53,7 @@ IBM主机相比于其他计算机系统，其主要特点在于它的[RAS](https
 
 同样与现代的流式文件系统不一样，DataSet是基于record的，每次读和写都只能以record为单位，这里就有一个很容易碰到的坑，如果一次写操作的数据量超过了一个record的长度，那超过部分会被截掉，并且没有任何提示的，如果总的写入量超过了这个DataSet创建时分配的大小，那超过部分也会被无情的截掉😪。所以每次创建DataSet的时候，我们都要预先设好它的各种属性（这其中的大部分细节都被现代的文件系统用[inode](https://zh.wikipedia.org/wiki/Inode)给隐藏起来了）。
 
-{{< figure src="/ibm-mainframe/allocate-dataset.png" caption="创建一个DataSet时可选的参数" >}}
+{{< figure src="/image/ibm-mainframe/allocate-dataset.png" caption="创建一个DataSet时可选的参数" >}}
 
 DataSet的名字用点(`.`)作为分隔符，一般来说整个z/OS的文件系统都是扁平化的，即不会出现一个文件夹里面嵌套好几层文件夹的情况，为了方便在这种结构下组织文件，z/OS支持用`?`或者`*`来模糊匹配一部分文件路径。还有一点值得提及的是，带单引号(`'`)的DataSet是绝对路径，不带单引号的是相对路径，相对于当前用户的HOME（z里面叫HLQ），所以如果我说要访问`COBLOG0.JCL`，其实我访问的是`'MYUSER.COBLOG0.JCL'`。
 
