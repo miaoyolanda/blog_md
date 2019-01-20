@@ -21,7 +21,7 @@ Etcd将raft协议实现为一个library，然后本身作为一个应用使用�
 
 {{< figure src="/image/raft-in-etcd/raft-stack.png" caption="Raft Stack" data-edit="https://whimsical.co/Q5KsUWANLBsoz3ks6LTRUg">}}
 
-这种全异步的交互方式好处就是它提高了性能，但坏处就是难以调试，代码看起来会很绕。拿etcd举例，很多时候你只看到它把一个消息push到一个slice/channel里面，然后这部分函数调用就结束了，你无法直观的追踪到，到底是谁最后处理了这个消息。
+这种全异步的交互方式好处就是它提高了性能，但坏处就是难以调试，代码看起来会很绕。拿etcd举例，很多时候你只看到它把一个消息push到一个slice/channel里面，然后这部分函数调用链就结束了，你无法直观的追踪到，到底是谁最后处理了这个消息。
 
 ## Code Breakdown
 
@@ -121,7 +121,7 @@ type unstable struct {
 }
 ```
 
-它们的关系可以用下图表示[^lichuang]：
+`entries`代表的是要进行操作的日志，但日志不可能无限增长，在特定的情况下，某些过期的日志会被清空。那这就引入一个新问题了，如果此后一个新的`follower`加入，而`leader`只有一部分操作日志，那这个新`follower`不是没法跟别人同步了吗？所以这个时候`snapshot`就登场了 - 我无法给你之前的日志，但我给你所有之前日志应用后的结果，之后的日志你再以这个`snapshot`为基础进行应用，那我们的状态就可以同步了。因此它们的结构关系可以用下图表示[^lichuang]：
 
 {{< figure src="/image/raft-in-etcd/log_unstable.png" >}}
 
