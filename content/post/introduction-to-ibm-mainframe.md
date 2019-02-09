@@ -9,7 +9,7 @@ keywords: ["ibm", "主机", "zos", "mainframe", "dataset", "jcl", "jes"]
 
 # 历史及现状
 
-IBM主机又称大型机(mainframe)，最早可以追溯到上世纪60年代IBM研发的[S/360系统](https://zh.wikipedia.org/wiki/IBM_System/360)，经过半个多世纪的不断更新，IBM的主机产品线已经从当初的S/360、S/370、S/390，发展到后来的z9、z10系列，现在(2018)已经GA的最新版本是z14：
+IBM主机又称大型机（Mainframe），最早可以追溯到上世纪60年代IBM研发的[S/360系统](https://zh.wikipedia.org/wiki/IBM_System/360)，经过半个多世纪的不断更新，IBM的主机产品线已经从当初的S/360、S/370、S/390，发展到后来的z9、z10系列，现在（2018）已经GA的最新版本是z14：
 
 <!-- ![z14(zMidas)](/ibm-mainframe/ibm_z14-large.jpg) -->
 
@@ -31,7 +31,11 @@ IBM主机相比于其他计算机系统，其主要特点在于它的[RAS](https
 
 {{< figure src="/image/ibm-mainframe/z14-hardware.jpeg" caption="硬件配置的发展" >}}
 
-除此之外，IBM还将一些常用的软件模块用硬件实现了，比如硬件压缩卡(zEDC)，排序指令，加密指令，向量运算指令等。这些原本需要通过软件模拟来实现的功能，直接有了对应的硬件支持，这种霸气的设计方法，对年轻的我造成了巨大的冲击。
+主机的一个鲜明的特色就是采用了中央处理器（`CP`）与系统辅助处理器（`SAP`，System Assist Processor）组成，其所采用的CP既不是IBM自家的POWER，也不是x86，而是一个“IBM独立自主”的，基于z/Architecture主机架构而开发的处理器，其采用复杂指令集架构（CISC），有一些复杂指令负责微码执行，也有一些被分解为类似于RISC的操作，因此虽然在总体架构上是CISC，但也兼具了RISC的优点。[^cpu-architecture]
+
+[^cpu-architecture]: [浅析IBM新一代zEnterprise System大型主机的设计](https://mainframecn.com/article-71-1.html)
+
+除此之外，主机还将一些常用的软件模块用硬件实现了，比如硬件压缩卡（zEDC），排序指令，加密指令，向量运算指令等。这些原本需要通过软件模拟来实现的功能，直接有了对应的硬件支持，这种霸气的设计方法，对年轻的我造成了巨大的冲击。
 
 [^performance]: [新一代IBM z14主机技术介绍](https://cloud.tencent.com/developer/news/268909)
 
@@ -65,7 +69,7 @@ z/OS的向后兼容性简直可以用典范来形容[^quote-of-john]，据说一
 
 [^quote-of-john]: [John McKown on glang-dev mail-list](https://groups.google.com/d/msg/golang-dev/f6IC8Dm7weI/4Vzs9EY9CAAJ)
 
-![EBCDIC Standard](/ibm-mainframe/ebcdic.png)
+![EBCDIC Standard](/image/ibm-mainframe/ebcdic.png)
 
 这个在当时看来无比正确的决定却给现在的我们带来无数的坑，在移植x86平台的程序到主机时，最大的麻烦就在于字符集的处理。但这种备受开发人员吐槽的向后兼容性却很受客户的欢迎，因为客户的诉求就是稳定可靠，他们希望应用程序开发完了之后，不应该因为操作系统的升级而需要重新开发，从这点也可以看出IBM`客户至上`的理念。
 

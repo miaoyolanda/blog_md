@@ -150,7 +150,8 @@ raftLog由以下成员组成：
 
 raftLog结构体中，几部分数据的排列如下图所示[^lichuang]：
 
-{{< figure src="/image/raft-in-etcd/raftlog-layout.png" caption="RaftLog Layout" >}}
+{{< figure src="/image/raft-in-etcd/raftlog-layout.png" caption="RaftLog Layout" 
+data-edit="https://whimsical.co/PXkrQY12AyYcESfEZphjEP">}}
 
 这个数据排布的情况，可以从raftLog的初始化函数中看出来：
 
