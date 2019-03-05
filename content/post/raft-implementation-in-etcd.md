@@ -10,8 +10,8 @@ keywords: ["raft", "etcd", "分布式", "一致性算法", "共识算法"]
 
 <!-- The authors claim it is the most widely used Raft library in production. -->
 
-如果你还不熟悉raft，这个经典的[动画演示](http://thesecretlivesofdata.com/raft/)、[它的论文](https://raft.github.io/raft.pdf)和下面这个lecture可能会对你有帮助。说句题外话，很多conference和meetup都会把视频录像上传到YouTube上，YouTube简直就是程序员的衣柜，每逛一次都有新收获。
-{{< youtube YbZ3zDzDnrw >}}
+如果你还不熟悉raft，这个经典的[动画演示](http://thesecretlivesofdata.com/raft/)、[它的论文](https://raft.github.io/raft.pdf)以及[这个lecture](https://www.youtube.com/watch?v=YbZ3zDzDnrw)可能会对你有帮助。或者你也可以直接观看**下面的视频**，这是我作的一次技术分享，讲的是[etcd中raft模块的源码解析](https://reading.developerlearning.cn/reading/32-2019-03-02-etcd-raft/)。说句题外话，很多Conference和Meetup都会把视频录像上传到YouTube上，YouTube简直就是程序员的衣柜，每逛一次都有新收获。
+{{< youtube sL02PsR20gE >}}
 
 # Overview
 
@@ -502,4 +502,6 @@ type Ready struct {
 
 # Conclusion
 
-到目前为止，我还只是简单的带你过了一遍raft算法的实现，当然还有很多细节这里没有涉及，比如说Linearizable Read，snapshot机制，WAL的存储与回放，所以希望你能以这篇文章为基础，顺藤摸瓜，继续深入研究下去。
+Etcd里的raft模块只实现了raft共识算法，而像消息的网络传输，数据存储都由上层应用来完成。这篇文章先介绍了基本的数据结构，然后在这些数据结构的基础上引入了raft算法。同时，这里还以一个投票请求和写请求为例，介绍了一个请求从接受到应答的完整处理过程。
+
+但到目前为止，我们还有很多细节没有涉及，比如说Linearizable Read，snapshot机制，WAL的存储与回放，所以希望你能以这篇文章为基础，顺藤摸瓜，继续深入研究下去。
