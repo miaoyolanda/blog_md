@@ -15,6 +15,8 @@ contentCopyright: false
 ![Information is power](/image/information-is-power.jpg)
 
 > Information is power. But like all power, there are those who want to keep it for themselves.
+>
+> &mdash;<cite>Aaron Swartz</cite>
 
 希望通过这个博客，能够将自己的学习成果总结出来，与大家分享交流。
 
