@@ -9,14 +9,14 @@ keywords: ["ibm", "主机", "zos", "mainframe", "dataset", "jcl", "jes"]
 
 # 历史及现状
 
-IBM主机又称大型机（Mainframe），最早可以追溯到上世纪60年代IBM研发的[S/360系统](https://zh.wikipedia.org/wiki/IBM_System/360)，经过半个多世纪的不断更新，IBM的主机产品线已经从当初的S/360、S/370、S/390，发展到后来的z9、z10系列，现在（2018）已经GA的最新版本是z14：
+IBM主机又称大型机（Mainframe），最早可以追溯到上世纪60年代IBM研发的[S/360系统](https://zh.wikipedia.org/wiki/IBM_System/360)，经过半个多世纪的不断更新，IBM的主机产品线已经从当初的S/360、S/370、S/390，发展到后来的z9、z10系列，现在（2018）已经GA的最新版本是[z14](https://www.ibm.com/us-en/marketplace/z14)：
 
 <!-- ![z14(zMidas)](/ibm-mainframe/ibm_z14-large.jpg) -->
 
 {{< figure src="/image/ibm-mainframe/z14.png" caption="充满科技感的 z14" >}}
 
 
-IBM主机相比于其他计算机系统，其主要特点在于它的[RAS](https://zh.wikipedia.org/wiki/%E5%8F%AF%E9%9D%A0%E6%80%A7%E3%80%81%E5%8F%AF%E7%94%A8%E6%80%A7%E5%92%8C%E5%8F%AF%E7%B6%AD%E8%AD%B7%E6%80%A7)(Reliability, Availability, Serviceability 高可靠性、高可用性、高可维护性)。曾经有用户反馈，在使用主机的数十年时间内，从未发生过异常停机事件。正是因为这些方面的优点和强大的处理能力，到现在为止还没有其他的系统可以替代它。但由于成本巨大（根据客户需求的不同，一台主机售价约几千万到几亿人民币），使用主机系统的一般以政府、银行、保险公司和大型制造企业为主，因为这些机构对信息的稳定性和安全性要求很高。全球财富500强企业中的71%是IBM主机用户，全球企业级数据有80%驻留在IBM主机上[^market-share]。在我国，从央行到工农中建四大商业银行，其核心业务平台都是跑在IBM主机上的（希望银行能给点力，早日摆脱对国外技术的依赖）。
+IBM主机相比于其他计算机系统，其主要特点在于它的 [RAS](https://zh.wikipedia.org/wiki/%E5%8F%AF%E9%9D%A0%E6%80%A7%E3%80%81%E5%8F%AF%E7%94%A8%E6%80%A7%E5%92%8C%E5%8F%AF%E7%B6%AD%E8%AD%B7%E6%80%A7) (Reliability, Availability, Serviceability 高可靠性、高可用性、高可维护性)。曾经有用户反馈，在使用主机的数十年时间内，从未发生过异常停机事件。正是因为这些方面的优点和强大的处理能力，到现在为止还没有其他的系统可以替代它。但由于成本巨大（一台主机通常以亿为计价单位），使用主机系统的一般以政府、银行、保险公司和大型制造企业为主，因为这些机构对信息的稳定性和安全性要求很高。全球财富500强企业中的71%是IBM主机用户，全球企业级数据有80%驻留在IBM主机上[^market-share]。在我国，从央行到工农中建四大商业银行，其核心业务平台都是跑在IBM主机上的（希望银行能给点力，早日摆脱对国外技术的依赖）。
 
 [^market-share]: [大型机市场现状](https://servers.pconline.com.cn/gc/1202/2679853_3.html)
 
@@ -24,7 +24,9 @@ IBM主机相比于其他计算机系统，其主要特点在于它的[RAS](https
 
 我对硬件不是很了解，只能列举一些数据来说明主机的硬件性能（以最新的z14为例）[^performance]：
 
-* 14nm的处理器芯片制造工艺
+* 14nm制造工艺
+* 5.2GHz主频
+* 170颗处理器
 * 支持32TB内存
 * 支持8000个虚拟机
 * 可以横向扩展（Scale-out）到2百万个Docker容器
