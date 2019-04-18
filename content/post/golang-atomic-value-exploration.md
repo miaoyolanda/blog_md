@@ -1,6 +1,7 @@
 ---
-title: "Go atomic.Value 探究"
+title: "理解Go标准库中的atomic.Value类型"
 date: 2019-03-15T21:30:47+08:00
+keywords: ["go", "golang", "atomic", "cas", "concurrency", "并发", "原子操作", "lock free", "无锁", "同步", "多线程"]
 ---
 
 在 Go 语言标准库中，`sync/atomic`包将底层硬件提供的原子操作封装成了 Go 的函数。但这些操作只支持几种基本数据类型，因此为了扩大原子操作的适用范围，Go 语言在 1.4 版本的时候向`sync/atomic`包中添加了一个新的类型`Value`。此类型的值相当于一个容器，可以被用来“原子地"存储（Store）和加载（Load）**任意类型**的值。
@@ -15,7 +16,7 @@ date: 2019-03-15T21:30:47+08:00
 
 > Mutexes do no scale. Atomic loads do. 
 
-`mutex`会降低系统的并发度，而`atomic`包中的原子操作则不会。它的实现依赖于底层硬件提供的某些指令，这些指令在执行的过程中是不允许中断（interrupt）的，因此原子操作可以在`lock-free`的情况下保证并发安全，并且能够做到线性扩展。
+`Mutex`由**操作系统**实现，而`atomic`包中的原子操作则由**底层硬件**直接提供支持。在 CPU 实现的指令集里，有一些指令被封装进了`atomic`包，这些指令在执行的过程中是不允许中断（interrupt）的，因此原子操作可以在`lock-free`的情况下保证并发安全，并且它的性能也能做到随 CPU 个数的增多而线性扩展。
 
 好了，说了这么多的原子操作，我们先来看看什么样的操作能被叫做*原子操作* 。
 
@@ -125,7 +126,7 @@ type ifaceWords struct {
 
 出于安全考虑，Go 语言并不支持直接操作内存，但它的标准库中又提供一种*不安全（不保证向后兼容性）* 的指针类型`unsafe.Pointer`，让程序可以灵活的读取/操作内存。
 
-`unsafe.Pointer`的特别之处在于，它可以绕过 Go 语言类型系统的检查，与任意的指针类型互相转换。也就是说，如果两种类型具有相同的内存结构，我们可以将`unsafe.Pointer`当做桥梁，让这两种类型的指针相互转换，从而实现同一份内存拥有两种不同的解释方式。
+`unsafe.Pointer`的特别之处在于，它可以绕过 Go 语言类型系统的检查，与任意的指针类型互相转换。也就是说，如果两种类型具有相同的内存结构，我们可以将`unsafe.Pointer`当做桥梁，让这两种类型的指针相互转换，从而实现同一份内存拥有两种不同的解读方式。
 
 比如说，`[]byte`和`string`其实内部的存储结构都是一样的，但 Go 语言的类型系统禁止他俩互换。如果借助`unsafe.Pointer`，我们就可以实现在零拷贝的情况下，将`[]byte`数组直接转换成`string`类型。
 
@@ -144,8 +145,8 @@ func (v *Value) Store(x interface{}) {
   if x == nil {
     panic("sync/atomic: store of nil value into Value")
   }
-  vp := (*ifaceWords)(unsafe.Pointer(v))
-  xp := (*ifaceWords)(unsafe.Pointer(&x))
+  vp := (*ifaceWords)(unsafe.Pointer(v))  // Old value
+  xp := (*ifaceWords)(unsafe.Pointer(&x)) // New value
   for {
     typ := LoadPointer(&vp.typ)
     if typ == nil {
@@ -182,7 +183,7 @@ func (v *Value) Store(x interface{}) {
 
 大概的逻辑：
 
-* 第5~6行 - 通过`unsafe.Pointer`将现有的和要写入值分别转成`ifaceWords`类型，这样我们下一步就可以得到这两个`interface{}`的原始类型（typ）和真正的值（data）。
+* 第5~6行 - 通过`unsafe.Pointer`将**现有的**和**要写入的**值分别转成`ifaceWords`类型，这样我们下一步就可以得到这两个`interface{}`的原始类型（typ）和真正的值（data）。
 * 从第7行开始就是一个无限 for 循环。配合`CompareAndSwap`食用，可以达到乐观锁的功效。
 * 第8行，我们可以通过`LoadPointer`这个原子操作拿到当前`Value`中存储的类型。下面根据这个类型的不同，分3种情况处理。
 
@@ -229,4 +230,4 @@ func (v *Value) Load() (x interface{}) {
 
 本文从邮件列表中的一段讨论开始，介绍了`atomic.Value`的被提出来的历史缘由。然后由浅入深的介绍了它的使用姿势，以及内部实现。让大家不仅知其然，还能知其所以然。
 
-另外，再强调一遍，原子操作由底层硬件支持，而锁则由操作系统提供的API实现。若实现相同的功能，前者通常会更有效率，并且更能利用计算机多核的优势。所以，以后当我们想并发安全的更新一些变量的时候，我们应该优先选择用`atomic.Value`来实现。
+另外，再强调一遍，原子操作由**底层硬件**支持，而锁则由**操作系统**提供的 API 实现。若实现相同的功能，前者通常会更有效率，并且更能利用计算机多核的优势。所以，以后当我们想并发安全的更新一些变量的时候，我们应该优先选择用`atomic.Value`来实现。

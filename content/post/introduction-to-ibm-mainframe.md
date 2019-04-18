@@ -20,22 +20,32 @@ IBM主机相比于其他计算机系统，其主要特点在于它的 [RAS](http
 
 [^market-share]: [大型机市场现状](https://servers.pconline.com.cn/gc/1202/2679853_3.html)
 
+这里有一个 z14 的宣传视频，希望能给大家带来一定的感性认识：
+
+{{< youtube iCinf0v44Y4 >}}
+
 # 硬件
 
-我对硬件不是很了解，只能列举一些数据来说明主机的硬件性能（以最新的z14为例）[^performance]：
+我对硬件不是很了解，只能列举一些数据来说明主机的硬件性能（以最新的 z14 为例）[^performance]：
 
-* 14nm制造工艺
-* 5.2GHz主频
-* 170颗处理器
-* 支持32TB内存
+* 14nm 制造工艺
+* 5.2GHz 主频
+* 170 颗处理器
+* L1 private cache 128k i, 128k d
+* L2 private cache 2 MB i, 4 MB d
+* L3 shared cache 128 MB / chip
+* L4 shared cache 672 MB / drawer
+* 支持 32TB 内存
 * 支持8000个虚拟机
-* 可以横向扩展（Scale-out）到2百万个Docker容器
+* 可以横向扩展（scale out）到2百万个Docker容器
 
 {{< figure src="/image/ibm-mainframe/z14-hardware.jpeg" caption="硬件配置的发展" >}}
 
-主机的一个鲜明的特色就是采用了中央处理器（`CP`）与系统辅助处理器（`SAP`，System Assist Processor）组成，其所采用的CP既不是IBM自家的POWER，也不是x86，而是一个“IBM独立自主”的，基于z/Architecture主机架构而开发的处理器，其采用复杂指令集架构（CISC），有一些复杂指令负责微码执行，也有一些被分解为类似于RISC的操作，因此虽然在总体架构上是CISC，但也兼具了RISC的优点。[^cpu-architecture]
+主机的一个鲜明的特色就是采用了中央处理器（`CP`）与系统辅助处理器（`SAP`，System Assist Processor）组成，其所采用的CP既不是IBM自家的POWER，也不是x86，而是一个“IBM独立自主”的，基于z/Architecture主机架构而开发的处理器，其采用复杂指令集架构（CISC），有一些复杂指令负责微码（millicode）执行，也有一些被分解为类似于RISC的操作，因此虽然在总体架构上是CISC，但也兼具了RISC的优点。[^cpu-architecture]
 
 [^cpu-architecture]: [浅析IBM新一代zEnterprise System大型主机的设计](https://mainframecn.com/article-71-1.html)
+
+{{< figure src="/image/ibm-mainframe/z14-core-chip-spec-sheet-2017.png" caption="z14 10-core CP chip" width="400px">}}
 
 除此之外，主机还将一些常用的软件模块用硬件实现了，比如硬件压缩卡（zEDC），排序指令，加密指令，向量运算指令等。这些原本需要通过软件模拟来实现的功能，直接有了对应的硬件支持，这种霸气的设计方法，对年轻的我造成了巨大的冲击。
 
