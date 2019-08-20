@@ -32,7 +32,7 @@ type revision struct {
 }
 ```
 
-这里的main属性对应事务ID，全局递增不重复，它etcd中被当做一个逻辑时钟来使用。sub代表一次事务中不同的修改操作（如put和delete）编号，从0开始依次递增。所以在一次事务中，每一个修改操作所绑定的`revision`依次为`{txID, 0}`, `{txID, 1}`, `{txID, 2}`...
+这里的main属性对应事务ID，全局递增不重复，它在etcd中被当做一个逻辑时钟来使用。sub代表一次事务中不同的修改操作（如put和delete）编号，从0开始依次递增。所以在一次事务中，每一个修改操作所绑定的`revision`依次为`{txID, 0}`, `{txID, 1}`, `{txID, 2}`...
 
 ## keyIndex
 
@@ -46,7 +46,7 @@ type keyIndex struct {
 }
 ```
 
-它保存的是当前`key`的具体值（key），最近一次修改的版本号（modified），以及记录`key`生命周期的`generation`，一个`generation`代表了一个`key`从创建到被删除的过程。因为一个`key`可能会经历创建 => 删除 => 创建的好几个轮回，所以它有可能会有一个或多个`generation`。下面来看看一个`generation`包含哪些内容：
+它保存的是当前`key`的具体值（key），最近一次修改的版本号（modified），以及记录`key`生命周期的`generation`，一个`generation`代表了一个`key`从创建到被删除的过程。因为一个`key`可能会经历创建 -> 删除 -> 创建的好几个轮回，所以它有可能会有一个或多个`generation`。下面来看看一个`generation`包含哪些内容：
 
 ```go
 // generation contains multiple revisions of a key.

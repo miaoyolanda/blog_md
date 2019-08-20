@@ -1,5 +1,5 @@
 ---
-title: "理解Go标准库中的atomic.Value类型"
+title: "理解 Go 标准库中的 atomic.Value 类型"
 date: 2019-03-15T21:30:47+08:00
 keywords: ["go", "golang", "atomic", "cas", "concurrency", "并发", "原子操作", "lock free", "无锁", "同步", "多线程"]
 ---
@@ -8,7 +8,7 @@ keywords: ["go", "golang", "atomic", "cas", "concurrency", "并发", "原子操�
 
 # 历史起源
 
-我在`golang-dev`邮件列表中翻到了14年的[这段讨论](https://groups.google.com/forum/#!msg/golang-dev/SBmIen68ys0/WGfYQQSO4nAJ)，有人报告了`encoding/gob`包在多核机器上（80-core）上的性能问题，认为`encoding/gob`之所以不能完全利用到多核的特性是因为它里面使用了大量的互斥锁（mutex），如果把这些互斥锁换成用`atomic.LoadPointer/StorePointer`来做并发控制，那性能将能提升20倍。
+我在`golang-dev`邮件列表中翻到了14年的[这段讨论](https://groups.google.com/forum/#!msg/golang-dev/SBmIen68ys0/WGfYQQSO4nAJ)，有用户报告了`encoding/gob`包在多核机器上（80-core）上的性能问题，认为`encoding/gob`之所以不能完全利用到多核的特性是因为它里面使用了大量的互斥锁（mutex），如果把这些互斥锁换成用`atomic.LoadPointer/StorePointer`来做并发控制，那性能将能提升20倍。
 
 针对这个问题，有人提议在已有的`atomic`包的基础上封装出一个`atomic.Value`类型，这样用户就可以在不依赖 Go 内部类型`unsafe.Pointer`的情况下使用到`atomic`提供的原子操作。所以我们现在看到的`atomic`包中除了`atomic.Value`外，其余都是早期由汇编写成的，并且`atomic.Value`类型的底层实现也是建立在已有的`atomic`包的基础上。
 
@@ -24,7 +24,7 @@ keywords: ["go", "golang", "atomic", "cas", "concurrency", "并发", "原子操�
 
 一个或者多个操作在 CPU 执行的过程中不被中断的特性，称为*原子性（atomicity）* 。这些操作对外表现成一个不可分割的整体，他们要么都执行，要么都不执行，外界不会看到他们只执行到一半的状态。而在现实世界中，CPU 不可能不中断的执行一系列操作，但如果我们在执行多个操作时，能让他们的**中间状态对外不可见**，那我们就可以宣称他们拥有了"不可分割”的原子性。
 
-有些朋友可能不知道，在 Go（甚至是大部分语言）中，一条普通的赋值语句其实不是一个原子操作。例如，在32位机器上写`int64`类型的变量有中间状态，它会被拆成两次写操作（`MOV`）——写低 32 位和写高 32 位，如下图所示：
+有些朋友可能不知道，在 Go（甚至是大部分语言）中，一条普通的赋值语句其实不是一个原子操作。例如，在32位机器上写`int64`类型的变量就会有中间状态，因为它会被拆成两次写操作（`MOV`）——写低 32 位和写高 32 位，如下图所示：
 
 ![64位变量的赋值操作](/image/golang-atomic-value/64-bit-write.svg)
 
@@ -43,7 +43,7 @@ keywords: ["go", "golang", "atomic", "cas", "concurrency", "并发", "原子操�
 
 简洁的接口使得它的使用也很简单，只需将需要作并发保护的变量读取和赋值操作用`Load()`和`Store()`代替就行了。
 
-下面是一个常见的使用场景。应用程序定期的从外界获取最新的配置信息，然后更改自己内存中维护的配置变量。工作线程根据最新的配置来处理请求。
+下面是一个常见的使用场景：应用程序定期的从外界获取最新的配置信息，然后更改自己内存中维护的配置变量。工作线程根据最新的配置来处理请求。
 
 ```go
 package main
@@ -93,7 +93,7 @@ func main() {
 
 # 内部实现
 
-`罗永浩浩`曾说过：
+[罗永浩浩](https://zh.wikipedia.org/wiki/罗永浩)曾说过：
 
 > Simplicity is the hidden complexity
 
@@ -124,9 +124,9 @@ type ifaceWords struct {
 
 ### unsafe.Pointer
 
-出于安全考虑，Go 语言并不支持直接操作内存，但它的标准库中又提供一种*不安全（不保证向后兼容性）* 的指针类型`unsafe.Pointer`，让程序可以灵活的读取/操作内存。
+出于安全考虑，Go 语言并不支持直接操作内存，但它的标准库中又提供一种*不安全（不保证向后兼容性）* 的指针类型`unsafe.Pointer`，让程序可以灵活的操作内存。
 
-`unsafe.Pointer`的特别之处在于，它可以绕过 Go 语言类型系统的检查，与任意的指针类型互相转换。也就是说，如果两种类型具有相同的内存结构，我们可以将`unsafe.Pointer`当做桥梁，让这两种类型的指针相互转换，从而实现同一份内存拥有两种不同的解读方式。
+`unsafe.Pointer`的特别之处在于，它可以绕过 Go 语言类型系统的检查，与任意的指针类型互相转换。也就是说，如果两种类型具有相同的内存结构（layout），我们可以将`unsafe.Pointer`当做桥梁，让这两种类型的指针相互转换，从而实现同一份内存拥有两种不同的**解读**方式。
 
 比如说，`[]byte`和`string`其实内部的存储结构都是一样的，但 Go 语言的类型系统禁止他俩互换。如果借助`unsafe.Pointer`，我们就可以实现在零拷贝的情况下，将`[]byte`数组直接转换成`string`类型。
 
