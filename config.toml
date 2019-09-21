@@ -28,7 +28,7 @@ defaultContentLanguage = "zh-cn"           # Default language to use
   languageCode = "zh-cn"
 
 [author]                  # essential                     # 必需
-  name = "喵叔"
+  name = '<a href="//blog.betacat.io">喵叔</a>'
 
 [sitemap]                 # essential                     # 必需
   changefreq = "weekly"

@@ -1,5 +1,5 @@
 ---
-title: "Raft在etcd中的实现"
+title: "Raft 在 etcd 中的实现"
 date: 2018-11-13T19:47:17+08:00
 keywords: ["raft", "etcd", "分布式", "一致性算法", "共识算法"]
 ---

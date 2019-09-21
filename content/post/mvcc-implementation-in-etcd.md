@@ -1,22 +1,30 @@
 ---
-title: "MVCC在etcd中的实现"
+title: "MVCC 在 etcd 中的实现"
 date: 2018-12-24T18:26:52+08:00
 keywords: ["mvcc", "etcd", "数据库", "事务", "多版本并发控制"]
 ---
 
-[MVCC](https://en.wikipedia.org/wiki/Multiversion_concurrency_control)（Multi-version Cocurrent Control）即多版本并发控制技术，多用于数据库中的事务管理，其基本思想是保存一个数据的多个历史版本，从而解决事务管理中数据隔离的问题。
+## 简介
 
-这里的版本一般选择使用时间戳或事务ID来标识。在处理一个写请求时，MVCC不是简单的用新值覆盖旧值，而是为这一项添加一个新版本的数据。在读取一个数据项时，要先确定一个要读取的版本，然后根据版本找到对应的数据。这种写操作创建新版本，读操作访问旧版本的方式使得读写操作彼此隔离，他们之间就不需要用锁来协调。换句话说，在MVCC里读操作永远不会被阻塞，因此它特别适合etcd这种读操作比较多的场景。
+在数据库领域，面对高并发环境下数据冲突的问题，业界常用的解决方案有两种：
 
-MVCC的基本原理就是这么简单，下面来结合具体代码，看看etcd是怎么实现的。跟[上篇]({{< ref "raft-implementation-in-etcd.md" >}})一样，这里的分析仍以etcd [v3.3.10](https://github.com/etcd-io/etcd/tree/v3.3.10)为例。
+1. 想办法避免冲突。使用**悲观锁**来确保同一时刻只有一人能对数据进行更改，常见的实现有读写锁（Read/Write Locks）、两阶段锁（Two-Phase Locking）等。
 
-# 数据结构
+2. 允许冲突，但发生冲突的时候，要有能力检测到。这种方法被称为**乐观锁**，即先乐观的认为冲突不会发生，除非被证明（检测到）当前确实产生冲突了。常见的实现有逻辑时钟（Logical Clock）、[MVCC](https://en.wikipedia.org/wiki/Multiversion_concurrency_control)（Multi-version Cocurrent Control）等。
 
-etcd的代码中，有关MVCC的实现都在一个叫[mvcc](https://github.com/etcd-io/etcd/tree/v3.3.10/mvcc)的包里。在正式介绍读写流程之前，我们先来了解下这个包里面定义的几个基础数据结构。
+在这些解决方案中，MVCC 由于其出色的性能优势，而被越来越多的数据库所采用，比如Oracle、PostgreSQL、MySQL InnoDB、etcd 等。它的基本思想是保存一个数据的多个历史版本，从而解决事务管理中数据隔离的问题。
 
-## revision
+这里的版本一般选择使用时间戳或事务 ID 来标识。在处理一个写请求时，MVCC 不是简单的用新值覆盖旧值，而是为这一项添加一个新版本的数据。在读取一个数据项时，要先确定一个要读取的版本，然后根据版本找到对应的数据。这种写操作创建新版本，读操作访问旧版本的方式使得读写操作彼此隔离，他们之间就不需要用锁来协调。换句话说，在 MVCC 里读操作永远不会被阻塞，因此它特别适合 etcd 这种读操作比较多的场景。
 
-[revision](https://github.com/etcd-io/etcd/blob/v3.3.10/mvcc/revision.go)即对应到MVCC中的版本，etcd中的每一次`key-value`的操作都会有一个相应的`revision`。
+MVCC 的基本原理就是这么简单，下面来结合具体代码，看看 etcd 是怎么实现的。跟[上篇]({{< ref "raft-implementation-in-etcd.md" >}})一样，这里的分析仍以etcd [v3.3.10](https://github.com/etcd-io/etcd/tree/v3.3.10) 为例。
+
+## 数据结构
+
+etcd 的代码中，有关 MVCC 的实现都在一个叫 [mvcc](https://github.com/etcd-io/etcd/tree/v3.3.10/mvcc) 的包里。在正式介绍读写流程之前，我们先来了解下这个包里面定义的几个基础数据结构。
+
+### revision
+
+[revision](https://github.com/etcd-io/etcd/blob/v3.3.10/mvcc/revision.go) 即对应到MVCC中的版本，etcd 中的每一次`key-value`的操作都会有一个相应的 `revision`。
 
 ```go
 // A revision indicates modification of the key-value space.
@@ -32,9 +40,9 @@ type revision struct {
 }
 ```
 
-这里的main属性对应事务ID，全局递增不重复，它在etcd中被当做一个逻辑时钟来使用。sub代表一次事务中不同的修改操作（如put和delete）编号，从0开始依次递增。所以在一次事务中，每一个修改操作所绑定的`revision`依次为`{txID, 0}`, `{txID, 1}`, `{txID, 2}`...
+这里的 main 属性对应事务 ID，全局递增不重复，它在 etcd 中被当做一个逻辑时钟来使用。sub 代表一次事务中不同的修改操作（如put和delete）编号，从0开始依次递增。所以在一次事务中，每一个修改操作所绑定的`revision`依次为`{txID, 0}`, `{txID, 1}`, `{txID, 2}`...
 
-## keyIndex
+### keyIndex
 
 [keyIndex](https://github.com/etcd-io/etcd/blob/v3.3.10/mvcc/key_index.go)用来记录一个key的生命周期中所涉及过的版本（revision）。
 
@@ -103,7 +111,7 @@ generations:
 
 好了，在知道了key的版本信息及相应的操作后，我们来看看怎么把它们组织起来：
 
-## treeIndex
+### treeIndex
 
 [treeIndex](https://github.com/etcd-io/etcd/blob/v3.3.10/mvcc/index.go)顾名思义就是一个树状索引，它通过在内存中维护一个[BTree](https://github.com/google/btree)，来达到加速查询key的功能（不明白为啥这里选用了BTree，BTree似乎更适合磁盘的场景，内存中的树一般不都使用红黑树等来实现么？）。
 
@@ -115,7 +123,7 @@ generations:
 
 看完了key以及key在内存中的组织结构，我们再来看看value是怎么处理的。
 
-## backend
+### backend
 
 backend封装了etcd中的存储，按照设计，backend可以对接多种存储，当前使用的是[boltdb](https://github.com/etcd-io/bbolt)，但作为一个CNCF项目，官方也在考虑接入更多的存储引擎[^pluggable-backend]。boltdb是一个单机的支持事务的KV存储，etcd的事务是基于boltdb的事务实现的。
 
@@ -150,15 +158,15 @@ rev={4 0}, key="key1", value="v12"
 rev={4 1}, key="key2", value="v22"
 ```
 
-所以总的来说，内存btree维护的是key => keyIndex的映射，keyIndex内维护多版本的revision信息，而revision可以映射到磁盘bbolt中具体的value。下面这个图很好的表示了这个过程[^lichuang]：
+所以总的来说，内存 btree 维护的是 key 到 keyIndex 的映射，keyIndex 内维护多版本的 revision 信息，而 revision 可以映射到磁盘bbolt中具体的value。下面这个图很好的表示了这个过程[^lichuang]：
 
-[^lichuang]: [Etcd存储的实现](https://lichuang.github.io/post/20181125-etcd-server/)
+[^lichuang]: [etcd存储的实现](https://lichuang.github.io/post/20181125-etcd-server/)
 
 {{< figure src="/image/mvcc-in-etcd/etcd-keyindex.png" caption="MVCC数据流程">}}
 
 基本概念就介绍到这里了，下面我们把这些概念串起来，看看读写操作的完整流程是怎样的。
 
-# 写操作
+## 写操作
 
 首先写操作的入口是applierV3的[Put函数](https://github.com/etcd-io/etcd/blob/v3.3.10/etcdserver/apply.go#L50)，它开启一个写事务，然后进过层层封装，最后干活的是写事务的`put`函数，精简后的逻辑大概是这样的：
 
@@ -189,7 +197,7 @@ func (tw *storeTxnWrite) put(key, value []byte, leaseID lease.LeaseID) {
 
 正如前面所分析的，这里的`put`操作首先获取了当前事务的ID（tw.beginRev），以及当前事务中已经进行过的更改数（tw.changes），然后以此为基础生成了`revision`，并向`boltdb`和`treeIndex`分别执行了两次写入操作。
 
-# 读操作
+## 读操作
 
 读操作的入口是applierV3的[Range函数](https://github.com/etcd-io/etcd/blob/v3.3.10/etcdserver/apply.go#L51)，跟写操作一样，它开启了一个只读事务，然后一路调用到`rangeKeys`函数：
 
@@ -215,11 +223,11 @@ func (tr *storeTxnRead) rangeKeys(key, end []byte, curRev int64, ro RangeOptions
 
 这里函数的参数`curRev`代表当前事务ID。拿到这个ID后，我们去`treeIndex`中查询，满足指定条件的`revision`有哪些，然后再根据这些`revision`去`boltdb`中查询当时存的`key-value`是什么。
 
-# 小结
+## 小结
 
-可以看到，MVCC的实现还是比较简单直接的。但在阅读代码的过程中，我也有一些看不明白的地方，毕竟一段代码在演化的过程中，会多出各种各样的细节处理，比如边界情况，性能调优，这些细节会扰乱视线，让我们难以抓住主干。一般碰到这种情况，我会采用两种方法：
+本文将乐观锁的原理及其在 etcd 中的实现 MVCC 梳理了一遍，希望对读者在理解和使用乐观锁上能有所帮助。
+
+在 etcd 中，MVCC 的实现还是比较简单直接的。但在阅读代码的过程中，我也有一些看不明白的地方，毕竟一段代码在演化的过程中，会多出各种各样的细节处理，比如边界情况，性能调优等。这些细节会扰乱视线，让我们难以抓住主干。一般碰到这种情况，我会采用两种方法：
 
 1. 阅读UT，看他们都在测试什么。一般UT的输入输出都比较确定，它能够向我们揭示这段代码的作者期望完成的功能是什么。有了这个目标后我们再去看实现，就能剔出哪些是跟主干功能有关的，哪些是细节处理。
-2. 查找较早的提交。既然代码是演进出来的，那它刚开始的几个版本一般都比较粗糙，有很多细节没有处理，但那也是这个功能最简单的实现。通过阅读作者早期的实现，也能帮助我们快速抓住主干。
-
-<!-- 本文将Lease机制的本质及在分布式系统中的主要应用梳理出来了，希望对读者在分布式系统中使用lease机制有帮助。 -->
+2. 查找较早的提交。既然代码是演进出来的，那它刚开始的几个版本一般都比较粗糙，有很多细节没有处理，但那也是这个功能最直接的实现。通过阅读作者早期的实现，也能帮助我们快速抓住主干。

@@ -6,7 +6,7 @@ keywords: ["go", "golang", "atomic", "cas", "concurrency", "并发", "原子操�
 
 在 Go 语言标准库中，`sync/atomic`包将底层硬件提供的原子操作封装成了 Go 的函数。但这些操作只支持几种基本数据类型，因此为了扩大原子操作的适用范围，Go 语言在 1.4 版本的时候向`sync/atomic`包中添加了一个新的类型`Value`。此类型的值相当于一个容器，可以被用来“原子地"存储（Store）和加载（Load）**任意类型**的值。
 
-# 历史起源
+## 历史起源
 
 我在`golang-dev`邮件列表中翻到了14年的[这段讨论](https://groups.google.com/forum/#!msg/golang-dev/SBmIen68ys0/WGfYQQSO4nAJ)，有用户报告了`encoding/gob`包在多核机器上（80-core）上的性能问题，认为`encoding/gob`之所以不能完全利用到多核的特性是因为它里面使用了大量的互斥锁（mutex），如果把这些互斥锁换成用`atomic.LoadPointer/StorePointer`来做并发控制，那性能将能提升20倍。
 
@@ -20,7 +20,7 @@ keywords: ["go", "golang", "atomic", "cas", "concurrency", "并发", "原子操�
 
 好了，说了这么多的原子操作，我们先来看看什么样的操作能被叫做*原子操作* 。
 
-## 原子性
+### 原子性
 
 一个或者多个操作在 CPU 执行的过程中不被中断的特性，称为*原子性（atomicity）* 。这些操作对外表现成一个不可分割的整体，他们要么都执行，要么都不执行，外界不会看到他们只执行到一半的状态。而在现实世界中，CPU 不可能不中断的执行一系列操作，但如果我们在执行多个操作时，能让他们的**中间状态对外不可见**，那我们就可以宣称他们拥有了"不可分割”的原子性。
 
@@ -34,7 +34,7 @@ keywords: ["go", "golang", "atomic", "cas", "concurrency", "并发", "原子操�
 
 面对这种多线程下变量的读写问题，我们的主角——`atomic.Value`登场了，它使得我们可以不依赖于不保证兼容性的`unsafe.Pointer`类型，同时又能将任意数据类型的读写操作封装成原子性操作（让中间状态对外不可见）。
 
-# 使用姿势
+## 使用姿势
 
 `atomic.Value`类型对外暴露的方法就两个：
 
@@ -91,7 +91,7 @@ func main() {
 }
 ```
 
-# 内部实现
+## 内部实现
 
 [罗永浩浩](https://zh.wikipedia.org/wiki/罗永浩)曾说过：
 
@@ -99,7 +99,7 @@ func main() {
 
 我们来看看在简单的外表下，它到底有哪些 hidden complexity。
 
-## 数据结构
+### 数据结构
 
 `atomic.Value`被设计用来存储任意类型的数据，所以它内部的字段是一个`interface{}`类型，非常的简单粗暴。
 
@@ -118,11 +118,11 @@ type ifaceWords struct {
 }
 ```
 
-## 写入（Store）操作
+### 写入（Store）操作
 
 在介绍写入之前，我们先来看一下 Go 语言内部的`unsafe.Pointer`类型。
 
-### unsafe.Pointer
+#### unsafe.Pointer
 
 出于安全考虑，Go 语言并不支持直接操作内存，但它的标准库中又提供一种*不安全（不保证向后兼容性）* 的指针类型`unsafe.Pointer`，让程序可以灵活的操作内存。
 
@@ -201,7 +201,7 @@ func (v *Value) Store(x interface{}) {
 
 ![atomic.Value Store 流程](/image/golang-atomic-value/atomic-value-store.svg)
 
-## 读取（Load）操作
+### 读取（Load）操作
 
 先上代码：
 
@@ -226,7 +226,7 @@ func (v *Value) Load() (x interface{}) {
 1. 如果当前的`typ`是 nil 或者`^uintptr(0)`，那就证明第一次写入还没有开始，或者还没完成，那就直接返回 nil （不对外暴露中间状态）。
 2. 否则，根据当前看到的`typ`和`data`构造出一个新的`interface{}`返回出去。
 
-# 总结
+## 总结
 
 本文从邮件列表中的一段讨论开始，介绍了`atomic.Value`的被提出来的历史缘由。然后由浅入深的介绍了它的使用姿势，以及内部实现。让大家不仅知其然，还能知其所以然。
 

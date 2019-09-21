@@ -1,7 +1,6 @@
 ---
 title: "使用 Telepresence 在本地调试 Kubernetes 微服务"
 date: 2019-07-24T23:10:21+08:00
-draft: false
 keywords: ["Telepresence", "Kubernetes", "K8S", "microservices", "microservices development"]
 ---
 
@@ -40,7 +39,7 @@ volumnes:  # <----------------------------------- 手工维护
 
 另一种解决方案就是我这里要介绍的 Telepresence 了，它能够在不修改程序代码的情况下，让本地应用程序无感的接入到 Kubernetes 集群中，这样你就可以直接在本地开发调试微服务了。
 
-# 简介
+## 简介
 
 [Telepresence](https://www.telepresence.io/) 是一个 CNCF [^CNCF] 基金会下的项目。它的工作原理是在本地和 Kubernetes 集群中搭建一个透明的双向代理，这使得我们可以在本地用熟悉的 IDE 和调试工具来运行一个微服务，同时该服务还可以无缝的与 Kubernetes 集群中的其他服务进行交互，好像它就运行在这个集群中一样。
 
@@ -54,7 +53,7 @@ volumnes:  # <----------------------------------- 手工维护
 2. 本地的服务直接访问到 Kubernetes 里的各种资源，包括环境变量、secrets、config map等
 3. 甚至集群中的服务还能直接访问到本地暴露出来的接口
 
-# 安装
+## 安装
 
 macOS:
 
@@ -149,7 +148,7 @@ $ telepresence --swap-deployment service-b --expose 8000:8000
 
 ## 总结
 
-这篇文章里我先提出了微服务开发中一个常见的问题，然后介绍了  Telepresence 项目，并且举例说明了怎样用它来调试两种常见的微服务场景。当然，Telepresence  还在不断的演进，本文中使用的是[v0.101](https://github.com/telepresenceio/telepresence/tree/0.101)版本，后续版本很可能有些不一样的地方，也欢迎大家不断指正。
+这篇文章里我先提出了微服务开发中一个常见的问题，然后介绍了 Telepresence 项目，并且举例说明了怎样用它来调试两种常见的微服务场景。当然，Telepresence 还在不断的演进，本文中使用的是[v0.101](https://github.com/telepresenceio/telepresence/tree/0.101)版本，后续版本很可能有些不一样的地方，也欢迎大家不断指正。
 
 
 
