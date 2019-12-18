@@ -64,7 +64,7 @@ defaultContentLanguage = "zh-cn"           # Default language to use
   
   baidu_analytics = "1d8c3618a611e95c78e0fcaf38baf230"
 
-  customFooter = "沪ICP备17033881号-1"
+  customFooter = '<a class="beian" href="http://www.beian.miit.gov.cn/" target="_blank">沪ICP备17033881号-1</a>'
 
   # Some global options, you can also close or open something in front matter for a single post, see more information from `archetypes/default.md`.
   toc = true                                                                            # 是否开启目录

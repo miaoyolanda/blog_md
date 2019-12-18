@@ -1,6 +1,7 @@
 ---
 title: "跟 etcd 学习数据库中事务隔离的实现"
 date: 2019-08-29T10:17:24+08:00
+lastmod: 2020-01-03T22:56:24+08:00
 draft: false
 keywords: ["etcd", "database", "transaction", "isolation level", "mvcc", "cas", "乐观锁", "数据库", "事务", "多版本并发控制", "并发"]
 ---
@@ -301,6 +302,8 @@ func (s *stmSerializable) Get(keys ...string) string {
     return respToValue(resp)
 }
 ```
+
+可以看到，在第一个读操作完成后，我们就设置了两个`OpOption`给后续的读操作使用。第一个 Option 指定了要读的版本号，第二个 Option 是告诉 etcd server 直接把它当前所知道的结果返回，而不需要通过 raft 协议跟别人确认一下它目前的结果是不是最新的，这提升了读取时的性能同时也能满足该场景下的需求（默认不加这个参数时是线性 linearizable 一致性的读取策略，可靠但是慢）。
 
 ### SerializableSnapshot
 

@@ -1,6 +1,7 @@
 ---
 title: "MVCC 在 etcd 中的实现"
 date: 2018-12-24T18:26:52+08:00
+lastmod: 2020-01-15T17:16:23+08:00
 keywords: ["mvcc", "etcd", "数据库", "事务", "多版本并发控制"]
 ---
 
@@ -113,9 +114,9 @@ generations:
 
 ### treeIndex
 
-[treeIndex](https://github.com/etcd-io/etcd/blob/v3.3.10/mvcc/index.go)顾名思义就是一个树状索引，它通过在内存中维护一个[BTree](https://github.com/google/btree)，来达到加速查询key的功能（不明白为啥这里选用了BTree，BTree似乎更适合磁盘的场景，内存中的树一般不都使用红黑树等来实现么？）。
+[treeIndex](https://github.com/etcd-io/etcd/blob/v3.3.10/mvcc/index.go)顾名思义就是一个树状索引，它通过在内存中维护一个[B树](https://github.com/google/btree)，来达到加速查询key的功能。
 
-这棵树的每一个节点都是`keyIndex`。这样，给定一个key就能很快查到它对应的`keyIndex`，进而可以得知它的版本信息。树状结构比较简单，看看图就能明白，我就不再分析了。
+这棵树的每一个节点都是`keyIndex`，它实现了[Item](https://github.com/google/btree/blob/v1.0.0/btree.go#L59)接口，其中的[比较函数](https://github.com/etcd-io/etcd/blob/v3.3.10/mvcc/key_index.go#L281)主要是比较`key`的大小。这样，给定一个`key`就能很快查到它对应的`keyIndex`，进而可以得知它所有的版本信息。树状结构比较简单，看看图就能明白，我就不再分析了。
 
 {{< figure src="/image/mvcc-in-etcd/treeIndex.svg" caption="treeIndex结构" data-edit="https://www.draw.io/#G1qAcogN4yVxoAZKj31WMkTTslxEYxM-7q">}}
 
@@ -125,7 +126,7 @@ generations:
 
 ### backend
 
-backend封装了etcd中的存储，按照设计，backend可以对接多种存储，当前使用的是[boltdb](https://github.com/etcd-io/bbolt)，但作为一个CNCF项目，官方也在考虑接入更多的存储引擎[^pluggable-backend]。boltdb是一个单机的支持事务的KV存储，etcd的事务是基于boltdb的事务实现的。
+backend封装了etcd中的存储，按照设计，backend可以对接多种存储，当前使用的是[boltdb](https://github.com/etcd-io/bbolt)，但作为一个CNCF项目，官方也在考虑接入更多的存储引擎[^pluggable-backend]。boltdb是一个纯Go语言实现的支持事务的KV存储，etcd的事务就是基于boltdb的事务实现的。
 
 [^pluggable-backend]: [Meta issue: Pluggable backend #10321](https://github.com/etcd-io/etcd/issues/10321)
 
@@ -158,7 +159,7 @@ rev={4 0}, key="key1", value="v12"
 rev={4 1}, key="key2", value="v22"
 ```
 
-所以总的来说，内存 btree 维护的是 key 到 keyIndex 的映射，keyIndex 内维护多版本的 revision 信息，而 revision 可以映射到磁盘bbolt中具体的value。下面这个图很好的表示了这个过程[^lichuang]：
+所以总的来说，**内存 btree 维护的是 key 到 keyIndex 的映射，keyIndex 内维护多版本的 revision 信息，而 revision 可以映射到磁盘bbolt中具体的value。下面这个图很好的表示了这个过程[^lichuang]**：
 
 [^lichuang]: [etcd存储的实现](https://lichuang.github.io/post/20181125-etcd-server/)
 
@@ -168,7 +169,7 @@ rev={4 1}, key="key2", value="v22"
 
 ## 写操作
 
-首先写操作的入口是applierV3的[Put函数](https://github.com/etcd-io/etcd/blob/v3.3.10/etcdserver/apply.go#L50)，它开启一个写事务，然后进过层层封装，最后干活的是写事务的`put`函数，精简后的逻辑大概是这样的：
+首先客户端的`Put`请求会被`EtcdServer`的[Put函数](https://github.com/etcd-io/etcd/blob/v3.3.10/etcdserver/v3_server.go#L111)接受到，它经过一套 raft 协议的流转后，在 apply 阶段被写入，精简后的写入逻辑大概是这样的：
 
 ```go
 // https://github.com/etcd-io/etcd/blob/v3.3.10/mvcc/kvstore_txn.go#L151
@@ -195,11 +196,11 @@ func (tw *storeTxnWrite) put(key, value []byte, leaseID lease.LeaseID) {
 }
 ```
 
-正如前面所分析的，这里的`put`操作首先获取了当前事务的ID（tw.beginRev），以及当前事务中已经进行过的更改数（tw.changes），然后以此为基础生成了`revision`，并向`boltdb`和`treeIndex`分别执行了两次写入操作。
+正如前面所分析的，这里的写入操作首先获取了当前事务开始时的ID（tw.beginRev），构造出了新的`revision`，然后将 value 写入到后端的`boltdb`中，并更新了内存中 key 的索引（treeIndex）。
 
 ## 读操作
 
-读操作的入口是applierV3的[Range函数](https://github.com/etcd-io/etcd/blob/v3.3.10/etcdserver/apply.go#L51)，跟写操作一样，它开启了一个只读事务，然后一路调用到`rangeKeys`函数：
+读操作的处理函数是由`EtcdServer`的[Range函数](https://github.com/etcd-io/etcd/blob/v3.3.10/etcdserver/v3_server.go#L86)处理的，在走完一段`Linearizable Read`协议后，我们发现最终的操作是由`storeTxnRead.rangeKeys`来完成的：
 
 ```go
 // https://github.com/etcd-io/etcd/blob/v3.3.10/mvcc/kvstore_txn.go#L111
@@ -221,7 +222,7 @@ func (tr *storeTxnRead) rangeKeys(key, end []byte, curRev int64, ro RangeOptions
     }
 ```
 
-这里函数的参数`curRev`代表当前事务ID。拿到这个ID后，我们去`treeIndex`中查询，满足指定条件的`revision`有哪些，然后再根据这些`revision`去`boltdb`中查询当时存的`key-value`是什么。
+这里函数的参数`curRev`代表当前事务ID。拿到了`key`以及感兴趣的`revision`之后，我们去`treeIndex`中查询，满足指定条件的`revision`有哪些，然后再根据这些`revision`去`boltdb`中查询当时存的`key-value`是什么，并封装成`RangeResult`返回出去。
 
 ## 小结
 
