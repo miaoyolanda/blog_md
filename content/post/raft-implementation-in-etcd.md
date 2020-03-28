@@ -1,6 +1,7 @@
 ---
 title: "Raft 在 etcd 中的实现"
 date: 2018-11-13T19:47:17+08:00
+lastmod: 2020-03-20T21:32:23+08:00
 keywords: ["raft", "etcd", "分布式", "一致性算法", "共识算法"]
 ---
 
@@ -92,7 +93,12 @@ type Message struct {
 }
 ```
 
-* Type：当前传递的消息类型，它的取值有[很多种](https://github.com/etcd-io/etcd/blob/v3.3.10/raft/raftpb/raft.pb.go#L80)，比如用来请求投票的MsgVote、用来处理网络分区的MsgPreVote[^prevote]、用来发给leader节点，让它在日志中增加数据的MsgProp(ose)、用来复制日志的MsgApp(end)、用来安装snapshot的MsgSnap。不同类型的消息也会用到下面不同的字段。
+* Type：当前传递的消息类型，它的取值有[很多个](https://github.com/etcd-io/etcd/blob/v3.3.10/raft/raftpb/raft.pb.go#L80)，但大致可以分成两类：
+  1. Raft 协议相关的，包括心跳MsgHeartbeat、日志MsgApp、投票消息MsgVote等。
+  2. 上层应用触发的（没错，上层应用并不是通过api与raft库交互的，而是通过发消息），比如应用对数据更改的消息MsgProp(osal)。
+
+不同类型的消息会用到下面不同的字段：
+
 * To, From分别代表了这个消息的接受者和发送者。
 * Term：这个消息发出时整个集群所处的任期。
 * LogTerm：消息发出者所保存的日志中最后一条的任期号，一般`MsgVote`会用到这个字段。

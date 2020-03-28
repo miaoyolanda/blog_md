@@ -76,6 +76,11 @@ defaultContentLanguage = "zh-cn"           # Default language to use
   customCSS = []            # if ['custom.css'], load '/static/css/custom.css' file
   customJS = []             # if ['custom.js'], load '/static/js/custom.js' file
 
+  [params.utteranc]         # utteranc is a comment system based on GitHub issues. see https://utteranc.es
+    enable = true
+    repo = "polyrabbit/polyrabbit.github.io"    # The repo to store comments
+    issueTerm = "title"
+
   [params.social]                                         # 社交链接
     a-email = "/email.gif"
     # b-stack-overflow = "http://localhost:1313"
