@@ -1,6 +1,7 @@
 ---
 title: "我所了解的IBM主机"
 date: 2018-10-16T17:16:09+08:00
+lastmod: 2020-05-20T21:32:23+08:00
 keywords: ["ibm", "主机", "zos", "mainframe", "dataset", "jcl", "jes"]
 ---
 
@@ -16,9 +17,11 @@ IBM主机又称大型机（Mainframe），最早可以追溯到上世纪60年代
 {{< figure src="/image/ibm-mainframe/z14.png" caption="充满科技感的 z14" >}}
 
 
-IBM主机相比于其他计算机系统，其主要特点在于它的 [RAS](https://zh.wikipedia.org/wiki/%E5%8F%AF%E9%9D%A0%E6%80%A7%E3%80%81%E5%8F%AF%E7%94%A8%E6%80%A7%E5%92%8C%E5%8F%AF%E7%B6%AD%E8%AD%B7%E6%80%A7) (Reliability, Availability, Serviceability 高可靠性、高可用性、高可维护性)。曾经有用户反馈，在使用主机的数十年时间内，从未发生过异常停机事件。正是因为这些方面的优点和强大的处理能力，到现在为止还没有其他的系统可以替代它。但由于成本巨大（一台主机通常以亿为计价单位），使用主机系统的一般以政府、银行、保险公司和大型制造企业为主，因为这些机构对信息的稳定性和安全性要求很高。全球财富500强企业中的71%是IBM主机用户，全球企业级数据有80%驻留在IBM主机上[^market-share]。在我国，从央行到工农中建四大商业银行，其核心业务平台都是跑在IBM主机上的（希望银行能给点力，早日摆脱对国外技术的依赖）。
+IBM主机相比于其他计算机系统，其主要特点在于它的 [RAS](https://zh.wikipedia.org/wiki/%E5%8F%AF%E9%9D%A0%E6%80%A7%E3%80%81%E5%8F%AF%E7%94%A8%E6%80%A7%E5%92%8C%E5%8F%AF%E7%B6%AD%E8%AD%B7%E6%80%A7) (Reliability, Availability, Serviceability 高可靠性、高可用性、高可维护性)。它对外承诺的 SLA 是5个9[^z14-red-book]，即全年停机时间不超过 5.26 分钟（*2020年更新：z15的 SLA 已经达到了7个9，即全年停机时间不超过 3.16 秒*）。曾经有用户反馈，在使用主机的数十年时间内，从未发生过异常停机事件。正是因为这些方面的优点和强大的处理能力，到现在为止还没有其他的系统可以替代它。但由于成本巨大（一台主机通常以亿为计价单位），使用主机系统的一般以政府、银行、保险公司和大型制造企业为主，因为这些机构对信息的稳定性和安全性要求很高。全球财富500强企业中的71%是IBM主机用户，全球企业级数据有80%驻留在IBM主机上[^market-share]。在我国，从央行到工农中建四大商业银行，其核心业务平台都是跑在IBM主机上的，希望银行能给点力，早日摆脱对国外技术的依赖。
 
 [^market-share]: [大型机市场现状](https://servers.pconline.com.cn/gc/1202/2679853_3.html)
+
+[^z14-red-book]: [IBM z14 Technical Guide](http://twinkie.homedns.org/TechDocs/Books/sg248451.pdf)
 
 这里有一个 z14 的宣传视频，希望能给大家带来一定的感性认识：
 

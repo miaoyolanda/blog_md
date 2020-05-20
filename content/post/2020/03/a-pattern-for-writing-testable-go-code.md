@@ -3,7 +3,7 @@ title: "编写可测试 Go 代码的一种模式"
 date: 2020-03-07T20:41:16+08:00
 lastmod: 2020-03-28T21:32:23+08:00
 keywords: ["design pattern", "unit test", "golang", "testable", "HTTP mock", "SQL mock", "time mock", "rand mock"]
-draft: true
+draft: false
 ---
 
 UT（单元测试）是个好东西，我们每个人都爱它。当写完一段功能复杂的逻辑时，各种变态的测试样例能增强我们对这段逻辑的信心；当更改别人的代码时，好的 UT coverage 能帮我们确保这次的更改不会影响到其他的代码；当阅读别人代码时，相应的 UT 也是一份文档，能告诉我们这段代码所实现的功能。因此我们总是希望别人的代码能有 UT，但自己却很少写 UT，这是为什么呢？🤔
